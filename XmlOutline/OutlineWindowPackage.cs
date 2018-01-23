@@ -1,14 +1,8 @@
 ﻿using System;
-using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Runtime.InteropServices;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.Win32;
 
 namespace XmlOutline
 {
@@ -47,6 +41,7 @@ namespace XmlOutline
         /// </summary>
         public OutlineWindowPackage()
         {
+            
             // Inside this method you can place any initialization code that does not require
             // any Visual Studio service because at this point the package object is created but
             // not sited yet inside Visual Studio environment. The place to do all the other
@@ -63,6 +58,8 @@ namespace XmlOutline
         {
             OutlineWindowCommand.Initialize(this);
             base.Initialize();
+
+            var docHan = new OutlineManager();
         }
 
         #endregion

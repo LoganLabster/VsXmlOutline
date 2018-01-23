@@ -54,6 +54,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CustomScripts\DocumentModel.cs" />
+    <Compile Include="CustomScripts\OutlineManager.cs" />
     <Compile Include="OutlineWindow.cs" />
     <Compile Include="OutlineWindowCommand.cs" />
     <Compile Include="OutlineWindowControl.xaml.cs">
@@ -179,6 +181,7 @@
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
