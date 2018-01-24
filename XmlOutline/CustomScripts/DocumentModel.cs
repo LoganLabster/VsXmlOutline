@@ -4,9 +4,12 @@ using System.Xml.Linq;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Xaml;
+using System.Windows.Media;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.XPath;
+using Microsoft.VisualStudio.Shell;
 
 
 namespace XmlOutline.CustomScripts
@@ -27,29 +30,36 @@ namespace XmlOutline.CustomScripts
         public DocumentModel(string path)
         {
             FullPath = path;
-//	        UpdateXml();
 		}
 
         /// <summary>
         /// saves the xml data locally and updates the treeview
         /// </summary>
-        public void UpdateXml()
+        public TreeView UpdateXml()
         {
-//            var xml = System.IO.File.ReadAllText(FullPath);
             xmlDocument = XDocument.Load(FullPath, LoadOptions.SetLineInfo);
             xmlDocument.DescendantNodes().OfType<XComment>().Remove();
-            Tree = new TreeView {Name = "treeview_1"};
+            Tree = new TreeView
+            {
+                Name = "treeview_1",
+                Background = (SolidColorBrush) new BrushConverter().ConvertFrom("#1e1e1e")
+            };
+            
             var firstNode = xmlDocument.Descendants().First();
             var treeItm = new TreeViewItem
             {
-                Header = firstNode.Name.LocalName + " - " + firstNode.FirstAttribute,
-                Tag = firstNode.AbsoluteXPath()
+                Header = Utilities.GenerateName(firstNode),
+                Tag = firstNode.AbsoluteXPath(),
+                Foreground = Brushes.WhiteSmoke
             };
+            
             treeItm.Selected += NodeSelected;
             Tree.Items.Add(treeItm);
             AddNodes(xmlDocument.Descendants().First(), treeItm);
+            return Tree;
         }
-
+        
+        
         /// <summary>
         /// A deepth first recursive function that traverses the xml document and creates a treeview
         /// </summary>
@@ -63,8 +73,9 @@ namespace XmlOutline.CustomScripts
             {
                 var treeItm = new TreeViewItem
                 {
-                    Header = xElements.First().Name.LocalName,
-                    Tag = xElements.First().AbsoluteXPath()
+                    Header = Utilities.GenerateName(xElements.First()), // xElements.First().Name.LocalName + " - " + xElements.First().FirstAttribute,
+                    Tag = xElements.First().AbsoluteXPath(),
+                    Foreground = Brushes.WhiteSmoke
                 };
                 treeItm.Selected += NodeSelected;
                 lastTreeItm.Items.Add(treeItm);
@@ -72,13 +83,14 @@ namespace XmlOutline.CustomScripts
             }
 
 
-            XElement sibl = (XElement)lastNode.NextNode;
+            var sibl = (XElement)lastNode.NextNode;
             if (sibl != null)
             {
                 var treeItm = new TreeViewItem
                 {
-                    Header = sibl.Name.LocalName,
-                    Tag = sibl.AbsoluteXPath()
+                    Header = Utilities.GenerateName(sibl), // sibl.Name.LocalName + " - " + sibl.FirstAttribute,
+                    Tag = sibl.AbsoluteXPath(),
+                    Foreground = Brushes.WhiteSmoke
                 };
                 treeItm.Selected += NodeSelected;
                 ((TreeViewItem) lastTreeItm.Parent).Items.Add(treeItm);

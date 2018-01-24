@@ -17,11 +17,16 @@ namespace XmlOutline
 
         public static OutlineManager Instance;
 
-        private Window codeWindow;
+        private Window codeWindow ;
+
+        private OutlineWindowControl _outlineWindow;
+        public OutlineWindowControl OutlineWindowInstance => _outlineWindow ?? (_outlineWindow = (OutlineWindowControl) OutlineWindow.Instance.Content);
+
         
         public OutlineManager()
         {
             Instance = this;
+            
 
             dte = Package.GetGlobalService(typeof(DTE)) as DTE;
             if (dte == null) throw new Exception("dte could not be found");
@@ -29,29 +34,28 @@ namespace XmlOutline
             dte.Events.WindowEvents.WindowActivated += OnWindowActivated;
             dte.Events.WindowEvents.WindowCreated += OnWindowOpened;
             dte.Events.WindowEvents.WindowClosing += OnWindowClosed;
+            dte.Events.TextEditorEvents.LineChanged += OnLineChanged;
         }
-
-        
 
         private void OnWindowActivated(Window gotFocus, Window lostFocus)
         {
             if(gotFocus.Document?.Language == "XML")
             {
-//                var nodeTitle = new Label{Content = gotFocus.Document.Name};
-//                ((OutlineWindowControl) OutlineWindow.Instance.Content).StackPanel.Children.Add(nodeTitle);
-                Debug.WriteLine("It's an xml file!");
-
+                if(gotFocus == codeWindow) return;
+                
                 var doc = xmlDocuments.Single(x => x.FullPath == gotFocus.Document.FullName);
-                doc.UpdateXml();
-                var tree = doc.Tree;
-                ((OutlineWindowControl)OutlineWindow.Instance.Content).Grid.Children.Clear();
-                ((OutlineWindowControl) OutlineWindow.Instance.Content).Grid.Children.Add(tree);
-
-                if (codeWindow == null || codeWindow != gotFocus)
+                var tree = doc.UpdateXml();
+                OutlineWindowInstance.Grid.Children.Clear();
+                OutlineWindowInstance.Grid.Children.Add(tree);
+                
+                if (codeWindow == null || 
+                    codeWindow != gotFocus)
                     codeWindow = gotFocus;
             }
-            else
+            else if (gotFocus.Kind != "Tool")
             {
+                codeWindow = null;
+                OutlineWindowInstance.Grid.Children.Clear();
                 Debug.WriteLine("Set window to empty");
             }
         }
@@ -77,25 +81,20 @@ namespace XmlOutline
             }
         }
 
+        private void OnLineChanged(TextPoint startpoint, TextPoint endpoint, int hint)
+        {
+            Debug.WriteLine("did stuff");
+        }
+        
         public void TreeElementSelected(int lineNumber)
         {
             Debug.WriteLine("Go to line number : " + lineNumber);
             if (codeWindow != null)
             {
                 var doc = (EnvDTE.TextDocument) dte.ActiveDocument.Object();
-                var editPoint = doc.StartPoint.CreateEditPoint();
-                editPoint.LineDown(lineNumber);
                 doc.Selection.GotoLine(lineNumber);
-
-//                EnvDTE.TextPoint(lineNumber);
-//                codeWindow.Document.
-
-//                var doc = (EnvDTE.TextDocument) codeWindow.Document;
-
-//                var d = dte.ActiveWindow.ac
-//                doc.StartPoint = 
             }
-            //Go to document thingy
         }
+
     }
 }
