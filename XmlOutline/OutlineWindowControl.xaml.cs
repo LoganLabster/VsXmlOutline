@@ -1,4 +1,6 @@
-﻿namespace XmlOutline
+﻿using System.Windows.Media;
+
+namespace XmlOutline
 {
     using System.Diagnostics.CodeAnalysis;
     using System.Windows;
@@ -26,9 +28,13 @@
         [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1300:ElementMustBeginWithUpperCaseLetter", Justification = "Default event handler naming pattern")]
         private void button1_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(
-                string.Format(System.Globalization.CultureInfo.CurrentUICulture, "Invoked '{0}'", this.ToString()),
-                "OutlineWindow");
+//            MessageBox.Show(
+//                string.Format(System.Globalization.CultureInfo.CurrentUICulture, "Invoked '{0}'", this.ToString()),
+//                "OutlineWindow");
+
+//            Grid.Background = new SolidColorBrush(Colors.Aqua);
+            var nwBtn = new Button {Content = "myNewButton"};
+            StackPanel.Children.Add(nwBtn);
         }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Windows.Controls;
+
 namespace XmlOutline
 {
     using System.Runtime.InteropServices;
@@ -21,8 +23,9 @@ namespace XmlOutline
     /// </para>
     /// </remarks>
     [Guid("bc4c5e8f-a492-4a44-9e57-ec9ad945140e")]
-    public class OutlineWindow : ToolWindowPane //, IVsRunningDocTableEvents
+    public class OutlineWindow : ToolWindowPane
     {
+        public static OutlineWindow Instance;
 
 
         /// <summary>
@@ -32,48 +35,14 @@ namespace XmlOutline
         {
             this.Caption = "OutlineWindow";
 
+            Instance = this;
+
             // This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
             // we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on
             // the object returned by the Content property.
             this.Content = new OutlineWindowControl();
-
-
+//            ((OutlineWindowControl) Content).StackPanel.Children.Add()
         }
 
-        //public int OnAfterFirstDocumentLock(uint docCookie, uint dwRDTLockType, uint dwReadLocksRemaining, uint dwEditLocksRemaining)
-        //{
-        //    Debug.WriteLine("Logan : 1");
-        //    return VSConstants.S_OK;
-        //}
-
-        //public int OnBeforeLastDocumentUnlock(uint docCookie, uint dwRDTLockType, uint dwReadLocksRemaining, uint dwEditLocksRemaining)
-        //{
-        //    Debug.WriteLine("Logan : 2");
-        //    return VSConstants.S_OK;
-        //}
-
-        //public int OnAfterSave(uint docCookie)
-        //{
-        //    Debug.WriteLine("Logan : 3");
-        //    return VSConstants.S_OK;
-        //}
-
-        //public int OnAfterAttributeChange(uint docCookie, uint grfAttribs)
-        //{
-        //    Debug.WriteLine("Logan : 4");
-        //    return VSConstants.S_OK;
-        //}
-
-        //public int OnBeforeDocumentWindowShow(uint docCookie, int fFirstShow, IVsWindowFrame pFrame)
-        //{
-        //    Debug.WriteLine("Logan : 5");
-        //    return VSConstants.S_OK;
-        //}
-
-        //public int OnAfterDocumentWindowHide(uint docCookie, IVsWindowFrame pFrame)
-        //{
-        //    Debug.WriteLine("Logan : 6");
-        //    return VSConstants.S_OK;
-        //}
     }
 }

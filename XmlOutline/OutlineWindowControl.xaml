@@ -9,8 +9,8 @@
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300"
              Name="MyToolWindow">
-    <Grid>
-        <StackPanel Orientation="Vertical">
+    <Grid x:Name="Grid">
+        <StackPanel Orientation="Vertical" x:Name="StackPanel">
             <TextBlock Margin="10" HorizontalAlignment="Center">OutlineWindow</TextBlock>
             <Button Content="Click me!" Click="button1_Click" Width="120" Height="80" Name="button1"/>
         </StackPanel>
