@@ -16,6 +16,8 @@ namespace XmlOutline
         private List<DocumentModel> xmlDocuments = new List<DocumentModel>();
 
         public static OutlineManager Instance;
+
+        private Window codeWindow;
         
         public OutlineManager()
         {
@@ -44,6 +46,9 @@ namespace XmlOutline
                 var tree = doc.Tree;
                 ((OutlineWindowControl)OutlineWindow.Instance.Content).Grid.Children.Clear();
                 ((OutlineWindowControl) OutlineWindow.Instance.Content).Grid.Children.Add(tree);
+
+                if (codeWindow == null || codeWindow != gotFocus)
+                    codeWindow = gotFocus;
             }
             else
             {
@@ -75,6 +80,21 @@ namespace XmlOutline
         public void TreeElementSelected(int lineNumber)
         {
             Debug.WriteLine("Go to line number : " + lineNumber);
+            if (codeWindow != null)
+            {
+                var doc = (EnvDTE.TextDocument) dte.ActiveDocument.Object();
+                var editPoint = doc.StartPoint.CreateEditPoint();
+                editPoint.LineDown(lineNumber);
+                doc.Selection.GotoLine(lineNumber);
+
+//                EnvDTE.TextPoint(lineNumber);
+//                codeWindow.Document.
+
+//                var doc = (EnvDTE.TextDocument) codeWindow.Document;
+
+//                var d = dte.ActiveWindow.ac
+//                doc.StartPoint = 
+            }
             //Go to document thingy
         }
     }
