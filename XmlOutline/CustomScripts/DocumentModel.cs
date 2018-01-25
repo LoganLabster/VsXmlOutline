@@ -39,9 +39,6 @@ namespace XmlOutline.CustomScripts
 
             var tree = CreateTree();
 
-            var items = tree.Items;
-
-
             for (var i = 0; i < VisualTreeHelper.GetChildrenCount(tree); i++)
             {
                 var child = (TreeViewItem)VisualTreeHelper.GetChild(tree, i);
@@ -52,21 +49,10 @@ namespace XmlOutline.CustomScripts
                     child.IsExpanded = originalChild.IsExpanded;
                 }
             }
-
-            
-//            throw new Exception("check if treeviewitems are already open");
             return Tree;
         }
 
-
-
-
-//        public TreeView UpdateXml()
-//        {
-//            return UpdateXml(true);
-//        }
         
-
         /// <summary>
         /// saves the xml data locally and updates the treeview
         /// </summary>
@@ -80,6 +66,7 @@ namespace XmlOutline.CustomScripts
                 Name = "treeview_1",
                 Background = (SolidColorBrush) new BrushConverter().ConvertFrom("#1e1e1e")
             };
+
             
             var firstNode = xmlDocument.Descendants().First();
             var treeItm = new TreeViewItem
@@ -103,8 +90,7 @@ namespace XmlOutline.CustomScripts
         /// <param name="lastTreeItm"></param>
         public void AddNodes(XElement lastNode, TreeViewItem lastTreeItm)
         {
-            var ancestors = lastNode.Descendants();
-            var xElements = ancestors.ToList();
+            var xElements = lastNode.Descendants().ToList();
             if (xElements.Any())
             {
                 var treeItm = new TreeViewItem
@@ -148,3 +134,6 @@ namespace XmlOutline.CustomScripts
         }
     }
 }
+
+
+

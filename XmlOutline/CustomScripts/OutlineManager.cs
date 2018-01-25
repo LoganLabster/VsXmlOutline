@@ -2,9 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Effects;
 using XmlOutline.CustomScripts;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
+using Window = EnvDTE.Window;
 
 namespace XmlOutline
 {
@@ -21,17 +26,18 @@ namespace XmlOutline
         private TextEditorEvents textEditorEvents;
         private DocumentEvents documentEvents;
         private Window codeWindow;
-
+        
         private int _changeCount = 0;
+
+        
 
         private OutlineWindowControl _outlineWindow;
         public OutlineWindowControl OutlineWindowInstance => _outlineWindow ?? (_outlineWindow = (OutlineWindowControl) OutlineWindow.Instance.Content);
-
+        
         
         public OutlineManager()
         {
             Instance = this;
-            
 
             dte = Package.GetGlobalService(typeof(DTE)) as DTE;
             if (dte == null) throw new Exception("dte could not be found");
@@ -43,9 +49,16 @@ namespace XmlOutline
             windowEvents.WindowActivated += OnWindowActivated;
             windowEvents.WindowCreated += OnWindowOpened;
             windowEvents.WindowClosing += OnWindowClosed;
+            windowEvents.WindowActivated += FirstRender;
             
             textEditorEvents.LineChanged += OnLineChange;
             documentEvents.DocumentSaved += DocumentChanged;
+        }
+
+        private void FirstRender(Window gotfocus, Window lostfocus)
+        {
+            windowEvents.WindowActivated -= FirstRender;
+            ClearTree();
         }
 
         private void DocumentChanged(Document document)
@@ -63,9 +76,10 @@ namespace XmlOutline
                 _changeCount = 0;
                 var doc = xmlDocuments.Single(x => x.FullPath == dte.ActiveWindow.Document.FullName);
                 var tree = doc.UpdateTree();
-                OutlineWindowInstance.Grid.Children.Clear();
-                OutlineWindowInstance.Grid.Children.Add(tree);
-                throw new Exception("Should take time into account too");
+
+                //OutlineWindowInstance.TreeGrid.Children.Clear();
+                ClearTree();
+                OutlineWindowInstance.TreeGrid.Children.Add(tree);
             }
         }
 
@@ -78,8 +92,10 @@ namespace XmlOutline
                 
                 var doc = xmlDocuments.Single(x => x.FullPath == gotFocus.Document.FullName);
                 var tree = doc.UpdateTree();
-                OutlineWindowInstance.Grid.Children.Clear();
-                OutlineWindowInstance.Grid.Children.Add(tree);
+
+                //OutlineWindowInstance.TreeGrid.Children.Clear();
+                ClearTree();
+                OutlineWindowInstance.TreeGrid.Children.Add(tree);
                 
                 if (codeWindow == null || 
                     codeWindow != gotFocus)
@@ -88,7 +104,8 @@ namespace XmlOutline
             else if (gotFocus.Kind != "Tool")
             {
                 codeWindow = null;
-                OutlineWindowInstance.Grid.Children.Clear();
+                //OutlineWindowInstance.TreeGrid.Children.Clear();
+                ClearTree();
             }
         }
 
@@ -104,11 +121,20 @@ namespace XmlOutline
 
         private void OnWindowClosed(Window window)
         {
+            if (window == codeWindow)
+            {
+                //OutlineWindowInstance.TreeGrid.Children.Clear();
+                ClearTree();
+            }
+
             if (window?.Document?.Language == "XML")
             {
+                
                 var selectedDoc = xmlDocuments.Single(x => x.FullPath == window.Document.FullName);
                 if (selectedDoc != null)
+                {
                     xmlDocuments.Remove(selectedDoc);
+                }
             }
         }
 
@@ -122,5 +148,58 @@ namespace XmlOutline
             }
         }
 
+
+        public void ClearTree()
+        {
+            OutlineWindowInstance.TreeGrid.Children.Clear();
+            
+            //Create name decal
+            var stackP = new StackPanel{Orientation = Orientation.Vertical};
+            stackP.HorizontalAlignment = HorizontalAlignment.Center;
+            stackP.VerticalAlignment = VerticalAlignment.Center;
+            
+            var title = new TextBlock
+            {
+                Text = "XML Outliner",
+                FontSize = 30,
+                Foreground = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
+                FontWeight = FontWeights.Bold,
+                FontStyle = FontStyles.Italic,
+                FontFamily = new FontFamily("Century Gothic"),
+                Effect = new DropShadowEffect
+                {
+                    ShadowDepth = 4,
+                    Color = Color.FromRgb(30, 30, 30),
+                    Direction = 315,
+                    Opacity = 0.5,
+                    BlurRadius = 4
+                }
+            };
+
+            var createdBy = new TextBlock
+            {
+                Text = "-Created by-",
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
+                FontStyle = FontStyles.Italic,
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+
+            var myName = new TextBlock
+            {
+                Text = "Tim K. Logan",
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
+                FontStyle = FontStyles.Italic,
+                HorizontalAlignment = HorizontalAlignment.Center
+            };
+            
+
+            stackP.Children.Add(title);
+            stackP.Children.Add(createdBy);
+            stackP.Children.Add(myName);
+            
+            OutlineWindowInstance.TreeGrid.Children.Add(stackP);
+        }
     }
 }
