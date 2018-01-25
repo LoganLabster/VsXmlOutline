@@ -32,14 +32,50 @@ namespace XmlOutline.CustomScripts
             FullPath = path;
 		}
 
+        public TreeView UpdateTree()
+        {
+            if (Tree == null)
+                return Tree = CreateTree();
+
+            var tree = CreateTree();
+
+            var items = tree.Items;
+
+
+            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(tree); i++)
+            {
+                var child = (TreeViewItem)VisualTreeHelper.GetChild(tree, i);
+                var originalChild = (TreeViewItem)VisualTreeHelper.GetChild(Tree, i);
+
+                if (child.Header == originalChild.Header)
+                {
+                    child.IsExpanded = originalChild.IsExpanded;
+                }
+            }
+
+            
+//            throw new Exception("check if treeviewitems are already open");
+            return Tree;
+        }
+
+
+
+
+//        public TreeView UpdateXml()
+//        {
+//            return UpdateXml(true);
+//        }
+        
+
         /// <summary>
         /// saves the xml data locally and updates the treeview
         /// </summary>
-        public TreeView UpdateXml()
+        private TreeView CreateTree ()
         {
             xmlDocument = XDocument.Load(FullPath, LoadOptions.SetLineInfo);
             xmlDocument.DescendantNodes().OfType<XComment>().Remove();
-            Tree = new TreeView
+//            Tree = new TreeView
+            var tree = new TreeView
             {
                 Name = "treeview_1",
                 Background = (SolidColorBrush) new BrushConverter().ConvertFrom("#1e1e1e")
@@ -54,9 +90,9 @@ namespace XmlOutline.CustomScripts
             };
             
             treeItm.Selected += NodeSelected;
-            Tree.Items.Add(treeItm);
+            tree.Items.Add(treeItm);
             AddNodes(xmlDocument.Descendants().First(), treeItm);
-            return Tree;
+            return tree;
         }
         
         
@@ -73,7 +109,7 @@ namespace XmlOutline.CustomScripts
             {
                 var treeItm = new TreeViewItem
                 {
-                    Header = Utilities.GenerateName(xElements.First()), // xElements.First().Name.LocalName + " - " + xElements.First().FirstAttribute,
+                    Header = Utilities.GenerateName(xElements.First()),
                     Tag = xElements.First().AbsoluteXPath(),
                     Foreground = Brushes.WhiteSmoke
                 };
@@ -88,7 +124,7 @@ namespace XmlOutline.CustomScripts
             {
                 var treeItm = new TreeViewItem
                 {
-                    Header = Utilities.GenerateName(sibl), // sibl.Name.LocalName + " - " + sibl.FirstAttribute,
+                    Header = Utilities.GenerateName(sibl),
                     Tag = sibl.AbsoluteXPath(),
                     Foreground = Brushes.WhiteSmoke
                 };
@@ -103,6 +139,7 @@ namespace XmlOutline.CustomScripts
             e.Handled = true;
             var xPath = (string) ((TreeViewItem)sender).Tag;
             var xmlNode = (IXmlLineInfo)xmlDocument.XPathSelectElement(xPath);
+            Debug.WriteLine("here it is : : : " + ((TreeViewItem)sender).IsExpanded);
             if (xmlNode != null)
             {
                 var lineNumber = xmlNode.LineNumber;
