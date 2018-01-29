@@ -36,10 +36,13 @@ namespace XmlOutline.CustomScripts
             FullPath = path;
 		}
 
+        /// <summary>
+        /// Updates the treeview based on the XML
+        /// Attempts to keep the nodes open if they were before
+        /// </summary>
+        /// <returns></returns>
         public TreeView UpdateTree()
         {
-
-
             if (Tree == null)
             {
                 Tree = CreateTree();
@@ -47,61 +50,25 @@ namespace XmlOutline.CustomScripts
 
                 return Tree;
             }
-
-
+            
             var tree = CreateTree();
             if (tree == null) return null;
 
-
-//            throw new Exception("Traverse the document and keep items expanded if they were expanded");
-
-            /*
-            //            var newItems = LogicalTreeHelper.GetChildren(tree).Cast<TreeViewItem>().ToList();
-            //            var originalItems = LogicalTreeHelper.GetChildren(Tree).Cast<TreeViewItem>().ToList();
-            //
-            //            for (int i = 0; i < newItems.Count; i++)
-            //            {
-            //                var newItem = newItems[i];
-            //
-            //                var selected = originalItems.First(x => x.Header == newItem.Header);
-            //                if (selected != null)
-            //                {
-            //                    newItem.IsExpanded = selected.IsExpanded;
-            //                }
-            //            }
-            //            while (enumerable.GetEnumerator().MoveNext())
-            //            {
-            //                var item = (TreeViewItem) enumerable.GetEnumerator().Current;
-            //                var isExpanded = item.IsExpanded;
-            //
-            //            }
-
-            //            var childCount = VisualTreeHelper.GetChildrenCount(Tree);
-            //            for (var i = 0; i < childCount; i++)
-            //            {
-            //                var child = (TreeViewItem)VisualTreeHelper.GetChild(tree, i);
-            //                var originalChild = (TreeViewItem)VisualTreeHelper.GetChild(Tree, i);
-            //
-            //                if (child.Header == originalChild.Header)
-            //                {
-            //                    child.IsExpanded = originalChild.IsExpanded;
-            //                }
-            //            }
-            */
-
-
-            var allNodes = xmlDocument.Descendants().ToList();
-            var count = allNodes.Count();
-            foreach (var node in allNodes)
-            {
-                var newItem = (TreeViewItem)LogicalTreeHelper.FindLogicalNode(tree, node.AbsoluteXPath());
-                var oldItem = (TreeViewItem)LogicalTreeHelper.FindLogicalNode(Tree, node.AbsoluteXPath());
-
-                if (newItem != null && oldItem != null)
-                {
-                    newItem.IsExpanded = oldItem.IsExpanded;
-                }
-            }
+            /*TODO This is incredibly fucking heavy when the document reaches 1000 lines or more, at 9000 lines my program just downright froze.
+              I will need to find a way to do it, but for now it works without this feature
+             */
+//            var allNodes = xmlDocument.Descendants().ToList();
+//            foreach (var node in allNodes)
+//            {
+//                var fixedName = Utilities.XpathToName(node.AbsoluteXPath());
+//                var newItem = (TreeViewItem)LogicalTreeHelper.FindLogicalNode(tree, fixedName);
+//                var oldItem = (TreeViewItem)LogicalTreeHelper.FindLogicalNode(Tree, fixedName);
+//
+//                if (newItem != null && oldItem != null)
+//                {
+//                    newItem.IsExpanded = oldItem.IsExpanded;
+//                }
+//            }
 
             var newItems = LogicalTreeHelper.GetChildren(tree).Cast<TreeViewItem>().ToList();
             newItems.First().IsExpanded = true;
@@ -159,8 +126,7 @@ namespace XmlOutline.CustomScripts
             var xElements = lastNode.Descendants().ToList();
             if (xElements.Any())
             {
-                var nameFixed = xElements.First().AbsoluteXPath().Replace("/", "_slash_");
-                nameFixed = nameFixed.Replace("[", "_start_").Replace("]", "_end_");
+                var nameFixed = Utilities.XpathToName(xElements.First().AbsoluteXPath());
 
                 var treeItm = new TreeViewItem
                 {
@@ -177,8 +143,7 @@ namespace XmlOutline.CustomScripts
             var sibl = (XElement)lastNode.NextNode;
             if (sibl != null)
             {
-                var nameFixed = sibl.AbsoluteXPath().Replace("/", "_slash_");
-                nameFixed = nameFixed.Replace("[", "_start_").Replace("]", "_end_");
+                var nameFixed = Utilities.XpathToName(sibl.AbsoluteXPath());
 
                 var treeItm = new TreeViewItem
                 {

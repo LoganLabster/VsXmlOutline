@@ -130,5 +130,12 @@ namespace XmlOutline.CustomScripts
             }
             return "";
         }
+
+        public static string XpathToName(string xpath)
+        {
+            xpath = xpath.Replace("/", "_slash_");
+            xpath = xpath.Replace("[", "_start_").Replace("]", "_end_");
+            return xpath;
+        }
     }
 }

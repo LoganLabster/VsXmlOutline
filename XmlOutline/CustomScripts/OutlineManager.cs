@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
-using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -10,7 +9,6 @@ using System.Windows.Media.Effects;
 using XmlOutline.CustomScripts;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
-using Thread = System.Threading.Thread;
 using Window = EnvDTE.Window;
 
 namespace XmlOutline
@@ -25,14 +23,15 @@ namespace XmlOutline
         private DTE dte;
         private Events events;
         private WindowEvents windowEvents;
-        private TextEditorEvents textEditorEvents;
         private DocumentEvents documentEvents;
         private Window codeWindow;
         
         private OutlineWindowControl _outlineWindow;
         public OutlineWindowControl OutlineWindowInstance => _outlineWindow ?? (_outlineWindow = (OutlineWindowControl) OutlineWindow.Instance.Content);
         
-        
+        /// <summary>
+        /// Initializes the manager and sets up all event handlers
+        /// </summary>
         public OutlineManager()
         {
             Instance = this;
@@ -41,7 +40,6 @@ namespace XmlOutline
             if (dte == null) throw new Exception("dte could not be found");
             events = dte.Events;
             windowEvents = events.WindowEvents;
-            textEditorEvents = events.TextEditorEvents;
             documentEvents = events.DocumentEvents;
 
             windowEvents.WindowActivated += OnWindowActivated;
@@ -49,31 +47,33 @@ namespace XmlOutline
             windowEvents.WindowClosing += OnWindowClosed;
             windowEvents.WindowActivated += FirstRender;
             
-//            textEditorEvents.LineChanged += OnLineChange;
             documentEvents.DocumentSaved += DocumentChanged;
         }
 
+        /// <summary>
+        /// First time the document is rendered the toolbox is given the logo
+        /// </summary>
+        /// <param name="gotfocus"></param>
+        /// <param name="lostfocus"></param>
         private void FirstRender(Window gotfocus, Window lostfocus)
         {
             windowEvents.WindowActivated -= FirstRender;
             ClearTree();
         }
-
+        
+        /// <summary>
+        /// Every time the document is saved it will update the layout
+        /// </summary>
+        /// <param name="document"></param>
         private void DocumentChanged(Document document)
         {
             if (document.Language != "XML") return;
             RePaint();
         }
 
-//        private void OnLineChange(TextPoint startpoint, TextPoint endpoint, int hint)
-//        {
-//            if (dte.ActiveWindow.Document.Language != "XML") return;
-//            {
-//                RePaint();
-//            }
-//        }
-
-
+        /// <summary>
+        /// Updates the layout
+        /// </summary>
         private void RePaint()
         {
             var doc = xmlDocuments.FirstOrDefault(x => x.FullPath == dte.ActiveWindow.Document.FullName);
@@ -88,10 +88,13 @@ namespace XmlOutline
             
             OutlineWindowInstance.TreeGrid.Children.Clear();
             OutlineWindowInstance.TreeGrid.Children.Add(tree);
-//            tree.Items.Refresh();
-//            tree.UpdateLayout();
         }
 
+        /// <summary>
+        /// Is called when focus goes from one window to another, checks if we should redo the XML document
+        /// </summary>
+        /// <param name="gotFocus"></param>
+        /// <param name="lostFocus"></param>
         private void OnWindowActivated(Window gotFocus, Window lostFocus)
         {
             if(gotFocus.Document?.Language == "XML")
@@ -111,6 +114,10 @@ namespace XmlOutline
             }
         }
 
+        /// <summary>
+        /// Registers new windows if they are XML documents
+        /// </summary>
+        /// <param name="window"></param>
         private void OnWindowOpened(Window window)
         {
             if (window.Document?.Language == "XML")
@@ -120,6 +127,10 @@ namespace XmlOutline
             }
         }
 
+        /// <summary>
+        /// Removes the closed window from the list if it's an XML document
+        /// </summary>
+        /// <param name="window"></param>
         private void OnWindowClosed(Window window)
         {
             if (window == codeWindow) ClearTree();
@@ -135,6 +146,10 @@ namespace XmlOutline
             }
         }
 
+        /// <summary>
+        /// Called when the user selects a tree element
+        /// </summary>
+        /// <param name="lineNumber"></param>
         public void TreeElementSelected(int lineNumber)
         {
             Debug.WriteLine("Go to line number : " + lineNumber);
@@ -146,12 +161,19 @@ namespace XmlOutline
         }
         
 
+        /// <summary>
+        /// Removes the UI content and replaces it with the logo
+        /// </summary>
         public void ClearTree()
         {
             OutlineWindowInstance.TreeGrid.Children.Clear();
             OutlineWindowInstance.TreeGrid.Children.Add(CreateDecal());
         }
 
+        /// <summary>
+        /// Creates the logo decal
+        /// </summary>
+        /// <returns></returns>
         private StackPanel CreateDecal()
         {
             var stackP = new StackPanel { Orientation = Orientation.Vertical };
