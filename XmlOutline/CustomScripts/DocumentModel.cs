@@ -43,48 +43,73 @@ namespace XmlOutline.CustomScripts
             if (Tree == null)
             {
                 Tree = CreateTree();
+                LogicalTreeHelper.GetChildren(Tree).Cast<TreeViewItem>().ToList().First().IsExpanded = true;
+
                 return Tree;
             }
 
 
             var tree = CreateTree();
             if (tree == null) return null;
-//
-//            var newItems = LogicalTreeHelper.GetChildren(tree).Cast<TreeViewItem>().ToList();
-//            var originalItems = LogicalTreeHelper.GetChildren(Tree).Cast<TreeViewItem>().ToList();
-//
-//            for (int i = 0; i < newItems.Count; i++)
-//            {
-//                var newItem = newItems[i];
-//
-//                var selected = originalItems.First(x => x.Header == newItem.Header);
-//                if (selected != null)
-//                {
-//                    newItem.IsExpanded = selected.IsExpanded;
-//                }
-//            }
-//            while (enumerable.GetEnumerator().MoveNext())
-//            {
-//                var item = (TreeViewItem) enumerable.GetEnumerator().Current;
-//                var isExpanded = item.IsExpanded;
-//
-//            }
 
-//            var childCount = VisualTreeHelper.GetChildrenCount(Tree);
-//            for (var i = 0; i < childCount; i++)
-//            {
-//                var child = (TreeViewItem)VisualTreeHelper.GetChild(tree, i);
-//                var originalChild = (TreeViewItem)VisualTreeHelper.GetChild(Tree, i);
-//
-//                if (child.Header == originalChild.Header)
-//                {
-//                    child.IsExpanded = originalChild.IsExpanded;
-//                }
-//            }
+
+//            throw new Exception("Traverse the document and keep items expanded if they were expanded");
+
+            /*
+            //            var newItems = LogicalTreeHelper.GetChildren(tree).Cast<TreeViewItem>().ToList();
+            //            var originalItems = LogicalTreeHelper.GetChildren(Tree).Cast<TreeViewItem>().ToList();
+            //
+            //            for (int i = 0; i < newItems.Count; i++)
+            //            {
+            //                var newItem = newItems[i];
+            //
+            //                var selected = originalItems.First(x => x.Header == newItem.Header);
+            //                if (selected != null)
+            //                {
+            //                    newItem.IsExpanded = selected.IsExpanded;
+            //                }
+            //            }
+            //            while (enumerable.GetEnumerator().MoveNext())
+            //            {
+            //                var item = (TreeViewItem) enumerable.GetEnumerator().Current;
+            //                var isExpanded = item.IsExpanded;
+            //
+            //            }
+
+            //            var childCount = VisualTreeHelper.GetChildrenCount(Tree);
+            //            for (var i = 0; i < childCount; i++)
+            //            {
+            //                var child = (TreeViewItem)VisualTreeHelper.GetChild(tree, i);
+            //                var originalChild = (TreeViewItem)VisualTreeHelper.GetChild(Tree, i);
+            //
+            //                if (child.Header == originalChild.Header)
+            //                {
+            //                    child.IsExpanded = originalChild.IsExpanded;
+            //                }
+            //            }
+            */
+
+
+            var allNodes = xmlDocument.Descendants().ToList();
+            var count = allNodes.Count();
+            foreach (var node in allNodes)
+            {
+                var newItem = (TreeViewItem)LogicalTreeHelper.FindLogicalNode(tree, node.AbsoluteXPath());
+                var oldItem = (TreeViewItem)LogicalTreeHelper.FindLogicalNode(Tree, node.AbsoluteXPath());
+
+                if (newItem != null && oldItem != null)
+                {
+                    newItem.IsExpanded = oldItem.IsExpanded;
+                }
+            }
+
+            var newItems = LogicalTreeHelper.GetChildren(tree).Cast<TreeViewItem>().ToList();
+            newItems.First().IsExpanded = true;
 
             Tree = tree;
             return Tree;
         }
+
         
         /// <summary>
         /// saves the xml data locally and updates the treeview
@@ -134,26 +159,33 @@ namespace XmlOutline.CustomScripts
             var xElements = lastNode.Descendants().ToList();
             if (xElements.Any())
             {
+                var nameFixed = xElements.First().AbsoluteXPath().Replace("/", "_slash_");
+                nameFixed = nameFixed.Replace("[", "_start_").Replace("]", "_end_");
+
                 var treeItm = new TreeViewItem
                 {
                     Header = Utilities.GenerateName(xElements.First()),
                     Tag = xElements.First().AbsoluteXPath(),
-                    Foreground = Brushes.WhiteSmoke
+                    Foreground = Brushes.WhiteSmoke,
+                    Name = nameFixed
                 };
                 treeItm.Selected += NodeSelected;
                 lastTreeItm.Items.Add(treeItm);
                 AddNodes(xElements.First(), treeItm);
             }
 
-
             var sibl = (XElement)lastNode.NextNode;
             if (sibl != null)
             {
+                var nameFixed = sibl.AbsoluteXPath().Replace("/", "_slash_");
+                nameFixed = nameFixed.Replace("[", "_start_").Replace("]", "_end_");
+
                 var treeItm = new TreeViewItem
                 {
                     Header = Utilities.GenerateName(sibl),
                     Tag = sibl.AbsoluteXPath(),
-                    Foreground = Brushes.WhiteSmoke
+                    Foreground = Brushes.WhiteSmoke,
+                    Name = nameFixed
                 };
                 treeItm.Selected += NodeSelected;
                 ((TreeViewItem) lastTreeItm.Parent).Items.Add(treeItm);
@@ -166,7 +198,6 @@ namespace XmlOutline.CustomScripts
             e.Handled = true;
             var xPath = (string) ((TreeViewItem)sender).Tag;
             var xmlNode = (IXmlLineInfo)xmlDocument.XPathSelectElement(xPath);
-            Debug.WriteLine("here it is : : : " + ((TreeViewItem)sender).IsExpanded);
             if (xmlNode != null)
             {
                 var lineNumber = xmlNode.LineNumber;
