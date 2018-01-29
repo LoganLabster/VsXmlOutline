@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Xml.Linq;
 using System.Linq;
@@ -9,7 +11,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.XPath;
+using Microsoft.Internal.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Shell;
+using Task = System.Threading.Tasks.Task;
 
 
 namespace XmlOutline.CustomScripts
@@ -34,52 +38,89 @@ namespace XmlOutline.CustomScripts
 
         public TreeView UpdateTree()
         {
+
+
             if (Tree == null)
-                return Tree = CreateTree();
+            {
+                Tree = CreateTree();
+                return Tree;
+            }
+
 
             var tree = CreateTree();
+            if (tree == null) return null;
+//
+//            var newItems = LogicalTreeHelper.GetChildren(tree).Cast<TreeViewItem>().ToList();
+//            var originalItems = LogicalTreeHelper.GetChildren(Tree).Cast<TreeViewItem>().ToList();
+//
+//            for (int i = 0; i < newItems.Count; i++)
+//            {
+//                var newItem = newItems[i];
+//
+//                var selected = originalItems.First(x => x.Header == newItem.Header);
+//                if (selected != null)
+//                {
+//                    newItem.IsExpanded = selected.IsExpanded;
+//                }
+//            }
+//            while (enumerable.GetEnumerator().MoveNext())
+//            {
+//                var item = (TreeViewItem) enumerable.GetEnumerator().Current;
+//                var isExpanded = item.IsExpanded;
+//
+//            }
 
-            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(tree); i++)
-            {
-                var child = (TreeViewItem)VisualTreeHelper.GetChild(tree, i);
-                var originalChild = (TreeViewItem)VisualTreeHelper.GetChild(Tree, i);
+//            var childCount = VisualTreeHelper.GetChildrenCount(Tree);
+//            for (var i = 0; i < childCount; i++)
+//            {
+//                var child = (TreeViewItem)VisualTreeHelper.GetChild(tree, i);
+//                var originalChild = (TreeViewItem)VisualTreeHelper.GetChild(Tree, i);
+//
+//                if (child.Header == originalChild.Header)
+//                {
+//                    child.IsExpanded = originalChild.IsExpanded;
+//                }
+//            }
 
-                if (child.Header == originalChild.Header)
-                {
-                    child.IsExpanded = originalChild.IsExpanded;
-                }
-            }
+            Tree = tree;
             return Tree;
         }
-
         
         /// <summary>
         /// saves the xml data locally and updates the treeview
         /// </summary>
         private TreeView CreateTree ()
         {
-            xmlDocument = XDocument.Load(FullPath, LoadOptions.SetLineInfo);
-            xmlDocument.DescendantNodes().OfType<XComment>().Remove();
-//            Tree = new TreeView
-            var tree = new TreeView
+            try
             {
-                Name = "treeview_1",
-                Background = (SolidColorBrush) new BrushConverter().ConvertFrom("#1e1e1e")
-            };
+                xmlDocument = XDocument.Load(FullPath, LoadOptions.SetLineInfo);
+                xmlDocument.DescendantNodes().OfType<XComment>().Remove();
+                var tree = new TreeView
+                {
+                    Name = "treeview_1",
+                    Background = (SolidColorBrush)new BrushConverter().ConvertFrom("#1e1e1e")
+                };
 
-            
-            var firstNode = xmlDocument.Descendants().First();
-            var treeItm = new TreeViewItem
+
+                var firstNode = xmlDocument.Descendants().First();
+                var treeItm = new TreeViewItem
+                {
+                    Header = Utilities.GenerateName(firstNode),
+                    Tag = firstNode.AbsoluteXPath(),
+                    Foreground = Brushes.WhiteSmoke
+                };
+
+                treeItm.Selected += NodeSelected;
+                tree.Items.Add(treeItm);
+                AddNodes(xmlDocument.Descendants().First(), treeItm);
+
+                return tree;
+            }
+            catch (Exception e)
             {
-                Header = Utilities.GenerateName(firstNode),
-                Tag = firstNode.AbsoluteXPath(),
-                Foreground = Brushes.WhiteSmoke
-            };
-            
-            treeItm.Selected += NodeSelected;
-            tree.Items.Add(treeItm);
-            AddNodes(xmlDocument.Descendants().First(), treeItm);
-            return tree;
+                Console.WriteLine(e);
+                return null;
+            }
         }
         
         

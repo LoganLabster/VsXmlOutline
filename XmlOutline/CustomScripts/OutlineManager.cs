@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -9,6 +10,7 @@ using System.Windows.Media.Effects;
 using XmlOutline.CustomScripts;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
+using Thread = System.Threading.Thread;
 using Window = EnvDTE.Window;
 
 namespace XmlOutline
@@ -27,10 +29,6 @@ namespace XmlOutline
         private DocumentEvents documentEvents;
         private Window codeWindow;
         
-        private int _changeCount = 0;
-
-        
-
         private OutlineWindowControl _outlineWindow;
         public OutlineWindowControl OutlineWindowInstance => _outlineWindow ?? (_outlineWindow = (OutlineWindowControl) OutlineWindow.Instance.Content);
         
@@ -51,7 +49,7 @@ namespace XmlOutline
             windowEvents.WindowClosing += OnWindowClosed;
             windowEvents.WindowActivated += FirstRender;
             
-            textEditorEvents.LineChanged += OnLineChange;
+//            textEditorEvents.LineChanged += OnLineChange;
             documentEvents.DocumentSaved += DocumentChanged;
         }
 
@@ -63,39 +61,44 @@ namespace XmlOutline
 
         private void DocumentChanged(Document document)
         {
-//            throw new NotImplementedException();
+            if (document.Language != "XML") return;
+            RePaint();
         }
 
-        private void OnLineChange(TextPoint startpoint, TextPoint endpoint, int hint)
+//        private void OnLineChange(TextPoint startpoint, TextPoint endpoint, int hint)
+//        {
+//            if (dte.ActiveWindow.Document.Language != "XML") return;
+//            {
+//                RePaint();
+//            }
+//        }
+
+
+        private void RePaint()
         {
-            if (dte.ActiveWindow.Document.Language != "XML") return;
-
-            _changeCount++;
-            if (_changeCount > 20)
+            var doc = xmlDocuments.FirstOrDefault(x => x.FullPath == dte.ActiveWindow.Document.FullName);
+            if (doc == null)
             {
-                _changeCount = 0;
-                var doc = xmlDocuments.Single(x => x.FullPath == dte.ActiveWindow.Document.FullName);
-                var tree = doc.UpdateTree();
-
-                //OutlineWindowInstance.TreeGrid.Children.Clear();
-                ClearTree();
-                OutlineWindowInstance.TreeGrid.Children.Add(tree);
+                OnWindowOpened(dte.ActiveWindow);
+                doc = xmlDocuments.Single(x => x.FullPath == dte.ActiveWindow.Document.FullName);
             }
+
+            var tree = doc.UpdateTree();
+            if (tree == null) return;
+            
+            OutlineWindowInstance.TreeGrid.Children.Clear();
+            OutlineWindowInstance.TreeGrid.Children.Add(tree);
+//            tree.Items.Refresh();
+//            tree.UpdateLayout();
         }
 
         private void OnWindowActivated(Window gotFocus, Window lostFocus)
         {
-            _changeCount = 0;
             if(gotFocus.Document?.Language == "XML")
             {
                 if(gotFocus == codeWindow) return;
                 
-                var doc = xmlDocuments.Single(x => x.FullPath == gotFocus.Document.FullName);
-                var tree = doc.UpdateTree();
-
-                //OutlineWindowInstance.TreeGrid.Children.Clear();
-                ClearTree();
-                OutlineWindowInstance.TreeGrid.Children.Add(tree);
+                RePaint();
                 
                 if (codeWindow == null || 
                     codeWindow != gotFocus)
@@ -104,14 +107,12 @@ namespace XmlOutline
             else if (gotFocus.Kind != "Tool")
             {
                 codeWindow = null;
-                //OutlineWindowInstance.TreeGrid.Children.Clear();
                 ClearTree();
             }
         }
 
         private void OnWindowOpened(Window window)
         {
-            Debug.WriteLine("If it's an xml document add it to the list");
             if (window.Document?.Language == "XML")
             {
                 var xmlDoc = new DocumentModel(window.Document.FullName);
@@ -121,12 +122,8 @@ namespace XmlOutline
 
         private void OnWindowClosed(Window window)
         {
-            if (window == codeWindow)
-            {
-                //OutlineWindowInstance.TreeGrid.Children.Clear();
-                ClearTree();
-            }
-
+            if (window == codeWindow) ClearTree();
+            
             if (window?.Document?.Language == "XML")
             {
                 
@@ -147,17 +144,20 @@ namespace XmlOutline
                 doc.Selection.GotoLine(lineNumber);
             }
         }
-
+        
 
         public void ClearTree()
         {
             OutlineWindowInstance.TreeGrid.Children.Clear();
-            
-            //Create name decal
-            var stackP = new StackPanel{Orientation = Orientation.Vertical};
+            OutlineWindowInstance.TreeGrid.Children.Add(CreateDecal());
+        }
+
+        private StackPanel CreateDecal()
+        {
+            var stackP = new StackPanel { Orientation = Orientation.Vertical };
             stackP.HorizontalAlignment = HorizontalAlignment.Center;
             stackP.VerticalAlignment = VerticalAlignment.Center;
-            
+
             var title = new TextBlock
             {
                 Text = "XML Outliner",
@@ -193,13 +193,13 @@ namespace XmlOutline
                 FontStyle = FontStyles.Italic,
                 HorizontalAlignment = HorizontalAlignment.Center
             };
-            
+
 
             stackP.Children.Add(title);
             stackP.Children.Add(createdBy);
             stackP.Children.Add(myName);
-            
-            OutlineWindowInstance.TreeGrid.Children.Add(stackP);
+
+            return stackP;
         }
     }
 }
