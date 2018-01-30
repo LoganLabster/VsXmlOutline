@@ -9,8 +9,25 @@
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300"
              Name="MyToolWindow">
+    <UserControl.Resources>
+        <XmlDataProvider x:Key="XmlProvider" Source="LogansTest.xml" XPath="/Items"/>
+        <HierarchicalDataTemplate x:Key="NodeTemplate" ItemsSource="{Binding XPath=./*}">
+            <TextBlock x:Name="nodetext"/>
+            <HierarchicalDataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Path=NodeType}" Value="Element">
+                    <Setter TargetName="nodetext" Property="Text" Value="{Binding Path=Name}"/>
+                </DataTrigger>
+            </HierarchicalDataTemplate.Triggers>
+        </HierarchicalDataTemplate>
+    </UserControl.Resources>
+    
 
-    <Grid x:Name="TreeGrid">
+    <Grid x:Name="TreeGrid" DataContext="XmlProvider">
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        
 
     </Grid>
 </UserControl>
