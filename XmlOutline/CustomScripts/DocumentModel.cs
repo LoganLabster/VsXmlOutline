@@ -1,19 +1,11 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Xml.Linq;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.XPath;
-using Microsoft.Internal.VisualStudio.PlatformUI;
-using Microsoft.VisualStudio.Shell;
-using Task = System.Threading.Tasks.Task;
 
 
 namespace XmlOutline.CustomScripts
