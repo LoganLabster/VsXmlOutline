@@ -17,8 +17,10 @@ namespace XmlOutline.CustomScripts
         public static StackPanel GenerateName(XElement node)
         {
             var stackPanel = new StackPanel {Orientation = Orientation.Horizontal};
+            stackPanel.SetValue(VirtualizingStackPanel.IsVirtualizingProperty, true);
+            stackPanel.SetValue(VirtualizingStackPanel.VirtualizationModeProperty, VirtualizationMode.Standard);
 
-            var texts = new TextBlock[]{new TextBlock(), new TextBlock()};
+            var texts = new[]{new TextBlock(), new TextBlock()};
             texts[0].Foreground = new SolidColorBrush(Colors.LightSkyBlue);
             texts[1].Foreground = new SolidColorBrush(Colors.YellowGreen);
 
