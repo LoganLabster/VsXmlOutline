@@ -4,265 +4,61 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:customScripts="clr-namespace:XmlOutline.CustomScripts"
+             xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
              Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
              Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300"
              Name="MyToolWindow">
     <UserControl.Resources>
-        <XmlDataProvider x:Key="XmlProvider" Source="LogansTest.xml" XPath="/Items"/>
+        <XmlDataProvider x:Key="MyXmlProvider" Source="LogansTest.xml" XPath="/Items"/>
+        <customScripts:NameGeneration x:Key="NameGeneration"/>
         <HierarchicalDataTemplate x:Key="NodeTemplate" ItemsSource="{Binding XPath=./*}">
-            <TextBlock x:Name="nodetext"/>
+<!--            <TreeViewItem x:Name="nodetext"/>-->
+            <customScripts:MyTreeViewNode x:Name="nodetext"/>
             <HierarchicalDataTemplate.Triggers>
                 <DataTrigger Binding="{Binding Path=NodeType}" Value="Element">
-                    <Setter TargetName="nodetext" Property="Text" Value="{Binding Path=Name}"/>
+                    <Setter TargetName="nodetext" Property="Header" Value="{Binding Converter={StaticResource NameGeneration}}"/>
                 </DataTrigger>
             </HierarchicalDataTemplate.Triggers>
         </HierarchicalDataTemplate>
     </UserControl.Resources>
     
 
-    <Grid x:Name="TreeGrid" DataContext="XmlProvider">
+    <Grid x:Name="TreeGrid" DataContext="MyXmlProvider">
         <Grid.RowDefinitions>
             <RowDefinition />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        
 
+        <TreeView Name="TreeItems" Visibility="Hidden"
+                  ItemTemplate="{StaticResource NodeTemplate}"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  ItemsSource="{Binding}"
+                  VirtualizingStackPanel.IsVirtualizing="False"
+                  VirtualizingStackPanel.VirtualizationMode="Standard"
+                  Background="#252525">
+        </TreeView>
+
+        <StackPanel x:Name="LogoPanel" Grid.Row="0" Visibility="Visible"
+                    Orientation="Vertical"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+            <TextBlock Text="XML Outliner" FontSize="30" Foreground="#3C3C3C"
+                       FontWeight="Bold" FontStyle="Italic" FontFamily="Century Gothic">
+                <TextBlock.Effect>
+                    <DropShadowEffect ShadowDepth="4" Color="#1E1E1E" Direction="315" Opacity="0.5" BlurRadius="4"/>
+                </TextBlock.Effect>
+            </TextBlock>
+            <TextBlock Text="-Created by-" FontSize="14" Foreground="#373737"
+                       FontStyle="Italic" HorizontalAlignment="Center"/>
+            <TextBlock Text="Tim K. Logan" FontSize="14" Foreground="#373737"
+                       FontStyle="Italic" HorizontalAlignment="Center"/>
+        </StackPanel>
     </Grid>
 </UserControl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
