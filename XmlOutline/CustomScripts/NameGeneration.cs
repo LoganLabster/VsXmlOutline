@@ -39,7 +39,7 @@ namespace XmlOutline.CustomScripts
 
             stackPanel.Children.Add(texts[0]);
             stackPanel.Children.Add(texts[1]);
-
+            
             switch (node.Name.LocalName)
             {
                 case "Time":

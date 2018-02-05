@@ -1,4 +1,8 @@
-﻿namespace XmlOutline
+﻿using System.Windows;
+using System.Xml;
+using System.Xml.Linq;
+
+namespace XmlOutline
 {
     using System.Windows.Controls;
 
@@ -13,6 +17,12 @@
         public OutlineWindowControl()
         {
             this.InitializeComponent();
+        }
+
+        private void TreeView_OnSelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            //E contains both the entire (old) and the selected (new), could just calculate the linenumber here
+            OutlineManager.Instance.TreeElementSelected(XElement.Parse(((XmlElement)e.NewValue).OuterXml));
         }
     }
 }

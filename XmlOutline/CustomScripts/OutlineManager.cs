@@ -9,6 +9,8 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Xml;
+using System.Xml.Linq;
+using System.Xml.XPath;
 using XmlOutline.CustomScripts;
 using EnvDTE;
 using EnvDTE80;
@@ -51,6 +53,31 @@ namespace XmlOutline
 //            windowEvents.WindowActivated += FirstRender;
             
             documentEvents.DocumentSaved += DocumentSaved;
+        }
+
+        public void TreeElementSelected(XElement element)
+        {
+//            var xPath = (string) ((TreeViewItem)sender).Tag;
+//            var xmlNode = (IXmlLineInfo)xmlDocument.XPathSelectElement(xPath);
+
+            var path = element.AbsoluteXPath();
+                
+                
+//                dte.ActiveDocument;
+//
+//            var xmlNode = (IXmlLineInfo)dte.ActiveDocument.XPath
+//            if (xmlNode != null)
+//            {
+//                var lineNumber = xmlNode.LineNumber;
+//                OutlineManager.Instance.TreeElementSelected(lineNumber);
+//            }
+//
+//            Debug.WriteLine("Go to line number : " + lineNumber);
+//            if (codeWindow != null)
+//            {
+//                var doc = (EnvDTE.TextDocument)dte.ActiveDocument.Object();
+//                doc.Selection.GotoLine(lineNumber);
+//            }
         }
 
         /// <summary>
@@ -220,15 +247,15 @@ namespace XmlOutline
         //        /// Called when the user selects a tree element
         //        /// </summary>
         //        /// <param name="lineNumber"></param>
-        //        public void TreeElementSelected(int lineNumber)
-        //        {
-        //            Debug.WriteLine("Go to line number : " + lineNumber);
-        //            if (codeWindow != null)
-        //            {
-        //                var doc = (EnvDTE.TextDocument) dte.ActiveDocument.Object();
-        //                doc.Selection.GotoLine(lineNumber);
-        //            }
-        //        }
+//                public void TreeElementSelected(int lineNumber)
+//                {
+//                    Debug.WriteLine("Go to line number : " + lineNumber);
+//                    if (codeWindow != null)
+//                    {
+//                        var doc = (EnvDTE.TextDocument) dte.ActiveDocument.Object();
+//                        doc.Selection.GotoLine(lineNumber);
+//                    }
+//                }
         //
         //
         //        /// <summary>
