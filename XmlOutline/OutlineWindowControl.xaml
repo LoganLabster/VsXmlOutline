@@ -5,7 +5,6 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              xmlns:customScripts="clr-namespace:XmlOutline.CustomScripts"
-             xmlns:diag="clr-namespace:System.Diagnostics;assembly=WindowsBase"
              Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
              Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
              mc:Ignorable="d"
@@ -14,19 +13,6 @@
     <UserControl.Resources>
         <XmlDataProvider x:Key="MyXmlProvider" Source="LogansTest.xml" XPath="/Items"/>
         <customScripts:NameGeneration x:Key="NameGeneration"/>
-        <HierarchicalDataTemplate x:Key="NodeTemplate" ItemsSource="{Binding XPath=./*}">
-<!--            <TreeViewItem x:Name="nodetext"/>-->
-            <TextBlock x:Name="nodetext"/>
-            <HierarchicalDataTemplate.Triggers>
-                <DataTrigger Binding="{Binding Path=NodeType}" Value="Element">
-                    <Setter TargetName="nodetext" Property="Textx" Value="{Binding Converter={StaticResource NameGeneration}}"/>
-<!--                    <Setter TargetName="nodetext" Property="Text" Value="{Binding Path=Name}"/>-->
-                </DataTrigger>
-                <Trigger SourceName="nodetext" Property="TreeViewItem.IsSelected" Value="True">
-                    <Setter TargetName="nodetext" Property="Background" Value="Red"/>
-                </Trigger>
-            </HierarchicalDataTemplate.Triggers>
-        </HierarchicalDataTemplate>
     </UserControl.Resources>
     
 
@@ -35,30 +21,27 @@
             <RowDefinition />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-
         <TreeView Name="TreeItems" Visibility="Hidden"
-                  ItemTemplate="{StaticResource NodeTemplate}"
+                  ItemsSource="{Binding Source={StaticResource MyXmlProvider}}"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch"
-                  ItemsSource="{Binding}"
                   VirtualizingStackPanel.IsVirtualizing="False"
                   VirtualizingStackPanel.VirtualizationMode="Standard"
                   Background="#252525"
                   SelectedItemChanged="TreeView_OnSelectedItemChanged">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding XPath=./*}"/>
+            </TreeView.ItemTemplate>
             <TreeView.ItemContainerStyle>
-                <Style TargetType="{x:Type TreeViewItem}">
-                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
-                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
-                    <Setter Property="HorizontalAlignment" Value="Left"/>
+                <Style TargetType="TreeViewItem">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=NodeType}" Value="Element">
+                            <Setter Property="Header" Value="{Binding Converter={StaticResource NameGeneration}}"/>
+                        </DataTrigger>
+                    </Style.Triggers>
                 </Style>
             </TreeView.ItemContainerStyle>
-<!--            <TreeView.ItemTemplate>-->
-<!--                <HierarchicalDataTemplate ItemsSource="{Binding Tree}">-->
-<!--                    <TextBlock Text="{Binding Name}"/>-->
-<!--                </HierarchicalDataTemplate>-->
-<!--            </TreeView.ItemTemplate>-->
         </TreeView>
-
         
 
 <!--        Logo-->
@@ -79,98 +62,3 @@
         </StackPanel>
     </Grid>
 </UserControl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
