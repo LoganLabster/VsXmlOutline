@@ -48,36 +48,26 @@ namespace XmlOutline
             documentEvents = events.DocumentEvents;
 
             windowEvents.WindowActivated += OnWindowActivated;
-//            windowEvents.WindowCreated += OnWindowOpened;
             windowEvents.WindowClosing += OnWindowClosed;
-//            windowEvents.WindowActivated += FirstRender;
             
             documentEvents.DocumentSaved += DocumentSaved;
         }
 
-        public void TreeElementSelected(XElement element)
+        public void TreeElementSelected(string path)
         {
-//            var xPath = (string) ((TreeViewItem)sender).Tag;
-//            var xmlNode = (IXmlLineInfo)xmlDocument.XPathSelectElement(xPath);
-
-            var path = element.AbsoluteXPath();
-                
-                
-//                dte.ActiveDocument;
-//
-//            var xmlNode = (IXmlLineInfo)dte.ActiveDocument.XPath
-//            if (xmlNode != null)
-//            {
-//                var lineNumber = xmlNode.LineNumber;
-//                OutlineManager.Instance.TreeElementSelected(lineNumber);
-//            }
-//
-//            Debug.WriteLine("Go to line number : " + lineNumber);
-//            if (codeWindow != null)
-//            {
-//                var doc = (EnvDTE.TextDocument)dte.ActiveDocument.Object();
-//                doc.Selection.GotoLine(lineNumber);
-//            }
+            if (path != null)
+            {
+                var d = (TextDocument)dte.ActiveDocument.Object("TextDocument");
+                var p = d.StartPoint.CreateEditPoint();
+                var s = p.GetText(d.EndPoint);
+                var doc = XDocument.Parse(s, LoadOptions.SetLineInfo);
+                IXmlLineInfo info = doc.XPathSelectElement(path);
+                if (info != null)
+                {
+                    int lineNumber = info.HasLineInfo() ? info.LineNumber : -1;
+                    ((EnvDTE.TextDocument)codeWindow.Document.Object()).Selection.GotoLine(lineNumber);
+                }
+            }
         }
 
         /// <summary>
@@ -320,5 +310,5 @@ namespace XmlOutline
         //        
         //                    return stackP;
         //                }
-        }
     }
+}

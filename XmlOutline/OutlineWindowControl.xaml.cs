@@ -1,6 +1,11 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Xml;
 using System.Xml.Linq;
+using System.Xml.XPath;
+using XmlOutline.CustomScripts;
+using Microsoft.Internal.VisualStudio.PlatformUI;
+using Utilities = XmlOutline.CustomScripts.Utilities;
 
 namespace XmlOutline
 {
@@ -18,11 +23,18 @@ namespace XmlOutline
         {
             this.InitializeComponent();
         }
-
+        
+        /// <summary>
+        /// Called when a treeviewitem is clicked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void TreeView_OnSelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
-            //E contains both the entire (old) and the selected (new), could just calculate the linenumber here
-            OutlineManager.Instance.TreeElementSelected(XElement.Parse(((XmlElement)e.NewValue).OuterXml));
+            e.Handled = true;
+            var path = Utilities.FindXPath((XmlNode)e.NewValue);
+            var v = ((XmlElement) e.NewValue).OwnerDocument?.OuterXml;
+            OutlineManager.Instance.TreeElementSelected(path);
         }
     }
 }
