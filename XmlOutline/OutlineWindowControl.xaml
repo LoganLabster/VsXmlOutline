@@ -27,7 +27,9 @@
                   VirtualizingStackPanel.IsVirtualizing="False"
                   VirtualizingStackPanel.VirtualizationMode="Standard"
                   Background="#252525"
-                  SelectedItemChanged="TreeView_OnSelectedItemChanged">
+                  SelectedItemChanged="TreeView_OnSelectedItemChanged"
+                  TreeViewItem.Expanded="TreeViewItem_Expanded"
+                  TreeViewItem.Collapsed="TreeViewItem_Collapsed">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate x:Name="myTest" ItemsSource="{Binding XPath=./*}">
                     <StackPanel Orientation="Horizontal">
@@ -36,7 +38,7 @@
                     </StackPanel>
                     <HierarchicalDataTemplate.Triggers>
                         <DataTrigger Binding="{Binding Path=NodeType}" Value="Element">
-                            <Setter TargetName="Title" Property="Text"  Value="{Binding Path=Name}"/>
+                            <Setter TargetName="Title"    Property="Text" Value="{Binding Path=Name}"/>
                             <Setter TargetName="SubTitle" Property="Text" Value="{Binding Converter={StaticResource NameGeneration}}" />
                         </DataTrigger>
                     </HierarchicalDataTemplate.Triggers>

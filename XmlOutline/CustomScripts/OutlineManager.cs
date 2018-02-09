@@ -1,19 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Media;
-using System.Windows.Media.Effects;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using XmlOutline.CustomScripts;
 using EnvDTE;
-using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Window = EnvDTE.Window;
 
@@ -23,7 +18,7 @@ namespace XmlOutline
     {
         public static OutlineManager Instance;
 
-        private List<DocumentModel> xmlDocuments = new List<DocumentModel>();
+        public List<NodeData> nodes = new List<NodeData>();
 
         private DTE dte;
         private Events events;
@@ -76,23 +71,40 @@ namespace XmlOutline
         /// <param name="window"></param>
         private void OnWindowClosed(Window window)
         {
-            if (window == codeWindow) ToggleTree(false);
-            
-//            if (window?.Document?.Language == "XML")
-//            {
-                
-//                var selectedDoc = xmlDocuments.Single(x => x.FullPath == window.Document.FullName);
-//                if (selectedDoc != null)
-//                {
-//                    xmlDocuments.Remove(selectedDoc);
-//                }
-//            }
+            if (window != codeWindow) return;
+            ToggleTree(false);
+            nodes = new List<NodeData>();
         }
 
         private void DocumentSaved(Document document)
         {
             var prov = (XmlDataProvider) OutlineWindowInstance.TreeItems.DataContext;
             prov.Refresh();
+
+
+//            var v = OutlineWindowInstance.TreeItems.Items.Cast<TreeViewItem>().ToList();
+
+            //            foreach (var treeViewItem in v)
+            //            {
+            //                
+            //            }
+
+            foreach (var node in nodes)
+            {
+                var v = OutlineWindowInstance.TreeItems.GetValue(node);
+                var path = node.Path.Split('/');
+                XNode selectedNode;
+
+
+                for (int i = 0; i < path.Length; i++)
+                {
+                    
+                }
+
+//                OutlineWindowInstance.TreeItems.find
+
+//                node.TreeItem.IsExpanded = true;
+            }
         }
 
         private void OnWindowActivated(Window gotFocus, Window lostFocus)
