@@ -32,8 +32,8 @@ namespace XmlOutline
         private void TreeView_OnSelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             e.Handled = true;
+            if (e.NewValue == null) return;
             var path = Utilities.FindXPath((XmlNode)e.NewValue);
-            var v = ((XmlElement) e.NewValue).OwnerDocument?.OuterXml;
             OutlineManager.Instance.TreeElementSelected(path);
         }
     }
