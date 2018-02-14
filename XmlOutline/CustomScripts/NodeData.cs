@@ -12,5 +12,7 @@ namespace XmlOutline.CustomScripts
     {
         public string Path { get; set; }
         public XmlElement Header { get; set; }
+
+        public List<int[]> IndexPath { get; set; }
     }
 }

@@ -50,18 +50,16 @@ namespace XmlOutline
 
         public void TreeElementSelected(string path)
         {
-            if (path != null)
+            if (path == null || dte.ActiveWindow.Type != EnvDTE.vsWindowType.vsWindowTypeToolWindow) return;
+            var d = (TextDocument)dte.ActiveDocument.Object("TextDocument");
+            var p = d.StartPoint.CreateEditPoint();
+            var s = p.GetText(d.EndPoint);
+            var doc = XDocument.Parse(s, LoadOptions.SetLineInfo);
+            IXmlLineInfo info = doc.XPathSelectElement(path);
+            if (info != null)
             {
-                var d = (TextDocument)dte.ActiveDocument.Object("TextDocument");
-                var p = d.StartPoint.CreateEditPoint();
-                var s = p.GetText(d.EndPoint);
-                var doc = XDocument.Parse(s, LoadOptions.SetLineInfo);
-                IXmlLineInfo info = doc.XPathSelectElement(path);
-                if (info != null)
-                {
-                    int lineNumber = info.HasLineInfo() ? info.LineNumber : -1;
-                    ((EnvDTE.TextDocument)codeWindow.Document.Object()).Selection.GotoLine(lineNumber);
-                }
+                int lineNumber = info.HasLineInfo() ? info.LineNumber : -1;
+                ((EnvDTE.TextDocument)codeWindow.Document.Object()).Selection.GotoLine(lineNumber);
             }
         }
 
@@ -80,34 +78,44 @@ namespace XmlOutline
         {
             var prov = (XmlDataProvider) OutlineWindowInstance.TreeItems.DataContext;
             prov.Refresh();
+            prov.DataChanged -= UnpackOpened;
+            prov.DataChanged += UnpackOpened;
+//                //TODO the only way to do this propperly is with a recursive method .. .-. '-' *-' *_* '-* '_' .-. ..
+        }
 
-
-//            var v = OutlineWindowInstance.TreeItems.Items.Cast<TreeViewItem>().ToList();
-
-            //            foreach (var treeViewItem in v)
-            //            {
-            //                
-            //            }
-
+        private void UnpackOpened(object sender, EventArgs e)
+        {
             foreach (var node in nodes)
             {
-                var v = OutlineWindowInstance.TreeItems.GetValue(node);
-                var path = node.Path.Split('/');
-                XNode selectedNode;
-
-
-                for (int i = 0; i < path.Length; i++)
+                var pathStrings = node.Path.Split('/').ToList();
+                pathStrings.RemoveAll(string.IsNullOrEmpty);
+                for (int i = 0; i < pathStrings.Count; i++)
                 {
-                    
+                    pathStrings[i] = pathStrings[i].Replace("{", "").Replace("}", "");
+                    pathStrings[i] = pathStrings[i].Replace("[", "|").Replace("]", "");
                 }
 
-//                OutlineWindowInstance.TreeItems.find
-
-//                node.TreeItem.IsExpanded = true;
+                ExpandTree(OutlineWindowInstance.TreeItems.ItemContainerGenerator, pathStrings, 0);
             }
         }
 
-        private void OnWindowActivated(Window gotFocus, Window lostFocus)
+        void ExpandTree(ItemContainerGenerator itemses, List<string> treeNodes, int step)
+        {
+            var name = treeNodes[step].Split('|')[0];
+            var number = int.Parse(treeNodes[step].Split('|')[1])-1;
+            var selected = itemses.Items.Cast<XmlElement>().Where(x => x.LocalName == name).ToList()[number];
+            var selectedItem =((TreeViewItem) itemses.ContainerFromItem(selected));
+            if(selectedItem == null) return;
+            selectedItem.IsExpanded = true;
+            
+            step++; 
+            if (treeNodes.Count > step)
+            {
+                ExpandTree(selectedItem.ItemContainerGenerator, treeNodes, step);
+            }
+        }
+
+            private void OnWindowActivated(Window gotFocus, Window lostFocus)
         {
             if(gotFocus.Document?.Language == "XML")
             {
@@ -119,7 +127,7 @@ namespace XmlOutline
                     Source = new Uri(gotFocus.Document.Path + gotFocus.Document.Name),
                     XPath = "./*"
                 };
-
+//                provider.DataChanged += UnpackOppened;
                 OutlineWindowInstance.TreeItems.DataContext = provider;
                 
                 if (codeWindow == null || 
