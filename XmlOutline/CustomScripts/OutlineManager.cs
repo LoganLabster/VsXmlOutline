@@ -105,9 +105,10 @@ namespace XmlOutline
             var number = int.Parse(treeNodes[step].Split('|')[1])-1;
             var selected = itemses.Items.Cast<XmlElement>().Where(x => x.LocalName == name).ToList()[number];
             var selectedItem =((TreeViewItem) itemses.ContainerFromItem(selected));
+            
             if(selectedItem == null) return;
             selectedItem.IsExpanded = true;
-            
+
             step++; 
             if (treeNodes.Count > step)
             {
