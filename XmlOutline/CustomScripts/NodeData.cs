@@ -8,9 +8,8 @@ using System.Xml;
 
 namespace XmlOutline.CustomScripts
 {
-    public class NodeData
-    {
-        public string Path { get; set; }
-        public XmlElement Header { get; set; }
-    }
+//    public class NodeData
+//    {
+//        public string Path { get; set; }
+//    }
 }

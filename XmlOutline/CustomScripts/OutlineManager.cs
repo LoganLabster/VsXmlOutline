@@ -19,7 +19,7 @@ namespace XmlOutline
     {
         public static OutlineManager Instance;
 
-        public List<NodeData> nodes = new List<NodeData>();
+        public List<OpennedDocument> Documents = new List<OpennedDocument>();
 
         private DTE dte;
         private Events events;
@@ -44,11 +44,64 @@ namespace XmlOutline
             documentEvents = events.DocumentEvents;
 
             windowEvents.WindowActivated += OnWindowActivated;
-            windowEvents.WindowClosing += OnWindowClosed;
+            documentEvents.DocumentClosing += OnDocumentClosed;
+            windowEvents.WindowCreated += OnWindowOpenned;
             
-            documentEvents.DocumentSaved += DocumentSaved;
+            documentEvents.DocumentSaved += RefreshData;
         }
 
+        private void OnWindowOpenned(Window window)
+        {
+            if (window.Document?.Language == "XML")
+            {
+                if (window == codeWindow) return;
+                var doc = new OpennedDocument
+                {
+                    DocName = window.Document.FullName,
+                    ExpandedNodes = new List<string>()
+                };
+                Documents.Add(doc);
+                ToggleTree(true);
+
+                if (OutlineWindowInstance.TreeItems.DataContext == null || OutlineWindowInstance.TreeItems.DataContext is string)
+                {
+                    var provider = new XmlDataProvider()
+                    {
+                        Source = new Uri(window.Document.Path + window.Document.Name),
+                        XPath = "./*"
+                    };
+                    OutlineWindowInstance.TreeItems.DataContext = provider;
+                }
+                else
+                {
+                    RefreshData();
+                }
+
+                if (codeWindow == null ||
+                    codeWindow != window)
+                    codeWindow = window;
+            }
+            else if (window.Kind != "Tool")
+            {
+                codeWindow = null;
+                ToggleTree(false);
+            }
+        }
+        
+        /// <summary>
+        /// Removes the closed window from the list if it's an XML document
+        /// </summary>
+        /// <param name="document"></param>
+        private void OnDocumentClosed(Document document)
+        {
+            Documents.RemoveAll(x => x.DocName == document.FullName);
+            
+//            if (document.ActiveWindow != codeWindow) return;
+            if(dte.ActiveDocument == null)
+                ToggleTree(false);
+        }
+
+        
         public void TreeElementSelected(string path)
         {
             if (path == null || dte.ActiveWindow.Type != EnvDTE.vsWindowType.vsWindowTypeToolWindow) return;
@@ -64,40 +117,38 @@ namespace XmlOutline
             }
         }
 
-        /// <summary>
-        /// Removes the closed window from the list if it's an XML document
-        /// </summary>
-        /// <param name="window"></param>
-        private void OnWindowClosed(Window window)
-        {
-            if (window != codeWindow) return;
-            ToggleTree(false);
-            nodes = new List<NodeData>();
-        }
 
-        private void DocumentSaved(Document document)
+        private void RefreshData(Document document = null)
         {
             var prov = (XmlDataProvider) OutlineWindowInstance.TreeItems.DataContext;
+            ToggleTree(true);
             prov.Refresh();
             prov.DataChanged -= UnpackOpened;
             prov.DataChanged += UnpackOpened;
-//                //TODO the only way to do this propperly is with a recursive method .. .-. '-' *-' *_* '-* '_' .-. ..
         }
 
 
         private void UnpackOpened(object sender, EventArgs e)
         {
-            foreach (var node in nodes)
+            var currentDoc = Documents.Single(x => x.DocName == dte.ActiveDocument.FullName);
+            currentDoc.IsRefreshing = true;
+
+            for (var index = 0; index < currentDoc.ExpandedNodes.Count; index++)
             {
-                var pathStrings = node.Path.Split('/').ToList();
+                var node = currentDoc.ExpandedNodes[index];
+                var pathStrings = node.Split('/').ToList();
                 pathStrings.RemoveAll(string.IsNullOrEmpty);
                 for (int i = 0; i < pathStrings.Count; i++)
                 {
                     pathStrings[i] = pathStrings[i].Replace("{", "").Replace("}", "");
                     pathStrings[i] = pathStrings[i].Replace("[", "|").Replace("]", "");
                 }
-                ExpandTree(OutlineWindowInstance.TreeItems.ItemContainerGenerator, pathStrings, 0, OutlineWindowInstance.TreeItems);
+
+                ExpandTree(OutlineWindowInstance.TreeItems.ItemContainerGenerator, pathStrings, 0,
+                    OutlineWindowInstance.TreeItems);
             }
+
+            currentDoc.IsRefreshing = false;
         }
 
         void ExpandTree(ItemContainerGenerator itemses, List<string> treeNodes, int step, ItemsControl last)
@@ -123,57 +174,16 @@ namespace XmlOutline
                 break;
             }
         }
-
-
-        /// <summary>
-        /// Search for an element of a certain type in the visual tree.
-        /// </summary>
-        /// <typeparam name="T">The type of element to find.</typeparam>
-        /// <param name="visual">The parent element.</param>
-        /// <returns></returns>
-        private T FindVisualChild<T>(Visual visual) where T : Visual
-        {
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(visual); i++)
-            {
-                Visual child = (Visual)VisualTreeHelper.GetChild(visual, i);
-                if (child != null)
-                {
-                    T correctlyTyped = child as T;
-                    if (correctlyTyped != null)
-                    {
-                        return correctlyTyped;
-                    }
-
-                    T descendent = FindVisualChild<T>(child);
-                    if (descendent != null)
-                    {
-                        return descendent;
-                    }
-                }
-            }
-            return null;
-        }
-
+        
         private void OnWindowActivated(Window gotFocus, Window lostFocus)
         {
-            if(gotFocus.Document?.Language == "XML")
+            if (gotFocus.Document?.Language == "XML")
             {
-                ToggleTree(true);
-                if(gotFocus == codeWindow) return;
-                
-                var provider = new XmlDataProvider()
-                {
-                    Source = new Uri(gotFocus.Document.Path + gotFocus.Document.Name),
-                    XPath = "./*"
-                };
-//                provider.DataChanged += UnpackOppened;
-                OutlineWindowInstance.TreeItems.DataContext = provider;
-                
-                if (codeWindow == null || 
-                    codeWindow != gotFocus)
-                    codeWindow = gotFocus;
+                ((XmlDataProvider) OutlineWindowInstance.TreeItems.DataContext).Source =
+                    new Uri(gotFocus.Document.Path + gotFocus.Document.Name);
+                RefreshData();
             }
-            else if (gotFocus.Kind != "Tool")
+            else if (gotFocus.Document?.Kind != "Tool")
             {
                 codeWindow = null;
                 ToggleTree(false);
@@ -193,181 +203,18 @@ namespace XmlOutline
                 OutlineWindowInstance.LogoPanel.Visibility = Visibility.Visible;
             }
         }
+        
+        public void NodeExpanded(string path)
+        {
+            var currentDoc = Documents.Single(x => x.DocName == dte.ActiveDocument.FullName);
+            currentDoc.AddExpandedNode(path);
+        }
 
-
-
-        //        /// <summary>
-        //        /// First time the document is rendered the toolbox is given the logo
-        //        /// </summary>
-        //        /// <param name="gotfocus"></param>
-        //        /// <param name="lostfocus"></param>
-        //        private void FirstRender(Window gotfocus, Window lostfocus)
-        //        {
-        //            windowEvents.WindowActivated -= FirstRender;
-        //            ClearTree();
-        //        }
-        //        
-        //        /// <summary>
-        //        /// Every time the document is saved it will update the layout
-        //        /// </summary>
-        //        /// <param name="document"></param>
-        //        private void DocumentChanged(Document document)
-        //        {
-        //            if (document.Language != "XML") return;
-        //            RePaint();
-        //        }
-        //
-        //        /// <summary>
-        //        /// Updates the layout
-        //        /// </summary>
-        //        private void RePaint()
-        //        {
-        //            var doc = xmlDocuments.FirstOrDefault(x => x.FullPath == dte.ActiveWindow.Document.FullName);
-        //            if (doc == null)
-        //            {
-        //                OnWindowOpened(dte.ActiveWindow);
-        //                doc = xmlDocuments.Single(x => x.FullPath == dte.ActiveWindow.Document.FullName);
-        //            }
-        //
-        //            var tree = doc.UpdateTree();
-        //            if (tree == null) return;
-        //            
-        //            OutlineWindowInstance.TreeGrid.Children.Clear();
-        //            OutlineWindowInstance.TreeGrid.Children.Add(tree);
-        //        }
-        //
-        //        /// <summary>
-        //        /// Is called when focus goes from one window to another, checks if we should redo the XML document
-        //        /// </summary>
-        //        /// <param name="gotFocus"></param>
-        //        /// <param name="lostFocus"></param>
-        //        private void OnWindowActivated(Window gotFocus, Window lostFocus)
-        //        {
-        //            if(gotFocus.Document?.Language == "XML")
-        //            {
-        //                if(gotFocus == codeWindow) return;
-        //                
-        //                RePaint();
-        //                
-        //                if (codeWindow == null || 
-        //                    codeWindow != gotFocus)
-        //                    codeWindow = gotFocus;
-        //            }
-        //            else if (gotFocus.Kind != "Tool")
-        //            {
-        //                codeWindow = null;
-        //                ClearTree();
-        //            }
-        //        }
-        //
-        //        /// <summary>
-        //        /// Registers new windows if they are XML documents
-        //        /// </summary>
-        //        /// <param name="window"></param>
-        //        private void OnWindowOpened(Window window)
-        //        {
-        //            if (window.Document?.Language == "XML")
-        //            {
-        //                var xmlDoc = new DocumentModel(window.Document.FullName);
-        //                xmlDocuments.Add(xmlDoc);
-        //            }
-        //        }
-        //
-        //        /// <summary>
-        //        /// Removes the closed window from the list if it's an XML document
-        //        /// </summary>
-        //        /// <param name="window"></param>
-        //        private void OnWindowClosed(Window window)
-        //        {
-        //            if (window == codeWindow) ClearTree();
-        //            
-        //            if (window?.Document?.Language == "XML")
-        //            {
-        //                
-        //                var selectedDoc = xmlDocuments.Single(x => x.FullPath == window.Document.FullName);
-        //                if (selectedDoc != null)
-        //                {
-        //                    xmlDocuments.Remove(selectedDoc);
-        //                }
-        //            }
-        //        }
-        //
-        //        /// <summary>
-        //        /// Called when the user selects a tree element
-        //        /// </summary>
-        //        /// <param name="lineNumber"></param>
-//                public void TreeElementSelected(int lineNumber)
-//                {
-//                    Debug.WriteLine("Go to line number : " + lineNumber);
-//                    if (codeWindow != null)
-//                    {
-//                        var doc = (EnvDTE.TextDocument) dte.ActiveDocument.Object();
-//                        doc.Selection.GotoLine(lineNumber);
-//                    }
-//                }
-        //
-        //
-        //        /// <summary>
-        //        /// Removes the UI content and replaces it with the logo
-        //        /// </summary>
-        //                public void ClearTree()
-        //                {
-        ////                    OutlineWindowInstance.TreeGrid.Children.Clear();
-        ////                    OutlineWindowInstance.TreeGrid.Children.Add(CreateDecal());
-        //                }
-        //        
-        //                /// <summary>
-        //                /// Creates the logo decal
-        //                /// </summary>
-        //                /// <returns></returns>
-        //                private StackPanel CreateDecal()
-        //                {
-        //                    var stackP = new StackPanel { Orientation = Orientation.Vertical };
-        //                    stackP.HorizontalAlignment = HorizontalAlignment.Center;
-        //                    stackP.VerticalAlignment = VerticalAlignment.Center;
-        //        
-        //                    var title = new TextBlock
-        //                    {
-        //                        Text = "XML Outliner",
-        //                        FontSize = 30,
-        //                        Foreground = new SolidColorBrush(Color.FromRgb(60, 60, 60)),
-        //                        FontWeight = FontWeights.Bold,
-        //                        FontStyle = FontStyles.Italic,
-        //                        FontFamily = new FontFamily("Century Gothic"),
-        //                        Effect = new DropShadowEffect
-        //                        {
-        //                            ShadowDepth = 4,
-        //                            Color = Color.FromRgb(30, 30, 30),
-        //                            Direction = 315,
-        //                            Opacity = 0.5,
-        //                            BlurRadius = 4
-        //                        }
-        //                    };
-        //        
-        //                    var createdBy = new TextBlock
-        //                    {
-        //                        Text = "-Created by-",
-        //                        FontSize = 14,
-        //                        Foreground = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
-        //                        FontStyle = FontStyles.Italic,
-        //                        HorizontalAlignment = HorizontalAlignment.Center
-        //                    };
-        //        
-        //                    var myName = new TextBlock
-        //                    {
-        //                        Text = "Tim K. Logan",
-        //                        FontSize = 14,
-        //                        Foreground = new SolidColorBrush(Color.FromRgb(55, 55, 55)),
-        //                        FontStyle = FontStyles.Italic,
-        //                        HorizontalAlignment = HorizontalAlignment.Center
-        //                    };
-        //        
-        //        
-        //                    stackP.Children.Add(title);
-        //                    stackP.Children.Add(createdBy);
-        //                    stackP.Children.Add(myName);
-        //        
-        //                    return stackP;
-        //                }
+        public void NodeCollapsed(string path)
+        {
+            var currentDoc = Documents.Single(x => x.DocName == dte.ActiveDocument.FullName);
+            currentDoc.RemoveExpandedNode(path);
+        }
     }
 }
+ 
