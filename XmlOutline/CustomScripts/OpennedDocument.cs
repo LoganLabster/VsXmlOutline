@@ -21,8 +21,14 @@ namespace XmlOutline.CustomScripts
 
         public void RemoveExpandedNode(string path)
         {
+            var index = path.LastIndexOf("/", StringComparison.Ordinal);
+
             if(IsRefreshing)return;
             ExpandedNodes.RemoveAll(x => x.Contains(path));
+
+            path = path.Remove(index);
+            if(!string.IsNullOrEmpty(path))
+                ExpandedNodes.Add(path);
         }
     }
 }

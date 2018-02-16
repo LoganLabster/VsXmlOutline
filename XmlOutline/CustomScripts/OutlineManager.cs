@@ -65,12 +65,8 @@ namespace XmlOutline
 
                 if (OutlineWindowInstance.TreeItems.DataContext == null || OutlineWindowInstance.TreeItems.DataContext is string)
                 {
-                    var provider = new XmlDataProvider()
-                    {
-                        Source = new Uri(window.Document.Path + window.Document.Name),
-                        XPath = "./*"
-                    };
-                    OutlineWindowInstance.TreeItems.DataContext = provider;
+                    GetDataProvider().Source = new Uri(window.Document.Path + window.Document.Name);
+                    GetDataProvider().XPath = "./*";
                 }
                 else
                 {
@@ -133,7 +129,8 @@ namespace XmlOutline
 
         private void UnpackOpened(object sender, EventArgs e)
         {
-            var currentDoc = Documents.Single(x => x.DocName == dte.ActiveDocument.FullName);
+            var currentDoc = Documents.SingleOrDefault(x => x.DocName == dte.ActiveDocument.FullName);
+            if (currentDoc == null) return;
             currentDoc.IsRefreshing = true;
 
             for (var index = 0; index < currentDoc.ExpandedNodes.Count; index++)
@@ -186,8 +183,21 @@ namespace XmlOutline
         {
             if (gotFocus.Document?.Language == "XML")
             {
-                ((XmlDataProvider) OutlineWindowInstance.TreeItems.DataContext).Source =
+                if (gotFocus == codeWindow) return;
+                if (Documents.All(x => x.DocName != gotFocus.Document.FullName))
+                {
+                    var doc = new OpennedDocument
+                    {
+                        DocName = gotFocus.Document.FullName,
+                        ExpandedNodes = new List<string>()
+                    };
+                    Documents.Add(doc);
+                }
+                ToggleTree(true);
+                
+                GetDataProvider().Source =
                     new Uri(gotFocus.Document.Path + gotFocus.Document.Name);
+                GetDataProvider().XPath = "./*";
                 RefreshData();
             }
             else if (gotFocus.Kind != "Tool")
@@ -195,6 +205,19 @@ namespace XmlOutline
                 codeWindow = null;
                 ToggleTree(false);
             }
+        }
+
+        private XmlDataProvider GetDataProvider()
+        {
+//            ((XmlDataProvider)OutlineWindowInstance.TreeItems.DataContext)
+            
+            if (OutlineWindowInstance.TreeItems.DataContext == null || 
+                OutlineWindowInstance.TreeItems.DataContext is string)
+            {
+                OutlineWindowInstance.TreeItems.DataContext = new XmlDataProvider();
+            }
+
+            return (XmlDataProvider)OutlineWindowInstance.TreeItems.DataContext;
         }
 
         /// <summary>
