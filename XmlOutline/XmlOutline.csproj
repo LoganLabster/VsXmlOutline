@@ -55,7 +55,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="CustomScripts\NameGeneration.cs" />
-    <Compile Include="CustomScripts\NodeData.cs" />
     <Compile Include="CustomScripts\OpennedDocument.cs" />
     <Compile Include="CustomScripts\OutlineManager.cs" />
     <Compile Include="CustomScripts\Utilities.cs" />

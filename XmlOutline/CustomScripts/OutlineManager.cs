@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Media;
+using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -26,7 +26,7 @@ namespace XmlOutline
         private WindowEvents windowEvents;
         private DocumentEvents documentEvents;
         private Window codeWindow;
-        
+
         private OutlineWindowControl _outlineWindow;
         public OutlineWindowControl OutlineWindowInstance => _outlineWindow ?? (_outlineWindow = (OutlineWindowControl) OutlineWindow.Instance.Content);
 
@@ -113,20 +113,23 @@ namespace XmlOutline
             if (info != null)
             {
                 int lineNumber = info.HasLineInfo() ? info.LineNumber : -1;
-                ((EnvDTE.TextDocument)codeWindow.Document.Object()).Selection.GotoLine(lineNumber);
+                ((EnvDTE.TextDocument)dte.ActiveDocument.Object()).Selection.GotoLine(lineNumber);
             }
         }
 
-
+        /// <summary>
+        /// Refreshes the data in the provider and also ensures that the treeview is rebuilt at the right time
+        /// </summary>
+        /// <param name="document"></param>
         private void RefreshData(Document document = null)
         {
             var prov = (XmlDataProvider) OutlineWindowInstance.TreeItems.DataContext;
             ToggleTree(true);
             prov.Refresh();
+            //TODO can I move these so they are only called once?
             prov.DataChanged -= UnpackOpened;
             prov.DataChanged += UnpackOpened;
         }
-
 
         private void UnpackOpened(object sender, EventArgs e)
         {
@@ -170,11 +173,15 @@ namespace XmlOutline
                     last = selectedItem;
                     continue;
                 }
-
                 break;
             }
         }
         
+        /// <summary>
+        /// Called when a new window has focus
+        /// </summary>
+        /// <param name="gotFocus"></param>
+        /// <param name="lostFocus"></param>
         private void OnWindowActivated(Window gotFocus, Window lostFocus)
         {
             if (gotFocus.Document?.Language == "XML")
@@ -183,13 +190,17 @@ namespace XmlOutline
                     new Uri(gotFocus.Document.Path + gotFocus.Document.Name);
                 RefreshData();
             }
-            else if (gotFocus.Document?.Kind != "Tool")
+            else if (gotFocus.Kind != "Tool")
             {
                 codeWindow = null;
                 ToggleTree(false);
             }
         }
 
+        /// <summary>
+        /// toggles whether or not the tree is rendered
+        /// </summary>
+        /// <param name="showTree"></param>
         public void ToggleTree(bool showTree)
         {
             if (showTree)
@@ -204,12 +215,20 @@ namespace XmlOutline
             }
         }
         
+        /// <summary>
+        /// Called when a node in the treeview is expanded
+        /// </summary>
+        /// <param name="path">The XPath of the node</param>
         public void NodeExpanded(string path)
         {
             var currentDoc = Documents.Single(x => x.DocName == dte.ActiveDocument.FullName);
             currentDoc.AddExpandedNode(path);
         }
 
+        /// <summary>
+        /// Called when a node in the treeview is collapsed
+        /// </summary>
+        /// <param name="path">The XPath of the node</param>
         public void NodeCollapsed(string path)
         {
             var currentDoc = Documents.Single(x => x.DocName == dte.ActiveDocument.FullName);
