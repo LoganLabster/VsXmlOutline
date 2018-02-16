@@ -30,6 +30,12 @@
                   SelectedItemChanged="TreeView_OnSelectedItemChanged"
                   TreeViewItem.Expanded="TreeViewItem_Expanded"
                   TreeViewItem.Collapsed="TreeViewItem_Collapsed">
+<!--            <TreeView.ItemsPanel>-->
+<!--                <ItemsPanelTemplate>-->
+<!--                    <customScripts:MyVirtualizingStackPanel/>-->
+<!--                </ItemsPanelTemplate>-->
+<!--            </TreeView.ItemsPanel>-->
+
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate x:Name="myTest" ItemsSource="{Binding XPath=./*}">
                     <StackPanel Orientation="Horizontal">
@@ -44,6 +50,10 @@
                     </HierarchicalDataTemplate.Triggers>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
+<!--            <Style TargetType="{x:Type TreeViewItem}"> -->
+<!--                <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />-->
+<!--                <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />-->
+<!--            </Style>-->
         </TreeView>
 
         <!--        Logo-->
@@ -64,3 +74,6 @@
         </StackPanel>
     </Grid>
 </UserControl>
+
+
+

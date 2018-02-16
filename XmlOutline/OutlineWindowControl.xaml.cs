@@ -52,7 +52,7 @@ namespace XmlOutline
             var node = new NodeData
             {
                 Path = path,
-                Header = (XmlElement)((TreeViewItem)e.OriginalSource).Header
+                Header = (XmlElement)((TreeViewItem)e.OriginalSource).Header,
             };
             var existingNode = OutlineManager.Instance.nodes.FirstOrDefault(x => Equals(x.Path, path));
             if (existingNode != null) return;

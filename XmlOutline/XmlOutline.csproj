@@ -54,6 +54,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CustomScripts\MyVirtualizingStackPanel.cs" />
     <Compile Include="CustomScripts\NameGeneration.cs" />
     <Compile Include="CustomScripts\NodeData.cs" />
     <Compile Include="CustomScripts\OutlineManager.cs" />

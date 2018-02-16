@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Media;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
@@ -83,6 +84,7 @@ namespace XmlOutline
 //                //TODO the only way to do this propperly is with a recursive method .. .-. '-' *-' *_* '-* '_' .-. ..
         }
 
+
         private void UnpackOpened(object sender, EventArgs e)
         {
             foreach (var node in nodes)
@@ -94,29 +96,65 @@ namespace XmlOutline
                     pathStrings[i] = pathStrings[i].Replace("{", "").Replace("}", "");
                     pathStrings[i] = pathStrings[i].Replace("[", "|").Replace("]", "");
                 }
-
-                ExpandTree(OutlineWindowInstance.TreeItems.ItemContainerGenerator, pathStrings, 0);
+                ExpandTree(OutlineWindowInstance.TreeItems.ItemContainerGenerator, pathStrings, 0, OutlineWindowInstance.TreeItems);
             }
         }
 
-        void ExpandTree(ItemContainerGenerator itemses, List<string> treeNodes, int step)
+        void ExpandTree(ItemContainerGenerator itemses, List<string> treeNodes, int step, ItemsControl last)
         {
-            var name = treeNodes[step].Split('|')[0];
-            var number = int.Parse(treeNodes[step].Split('|')[1])-1;
-            var selected = itemses.Items.Cast<XmlElement>().Where(x => x.LocalName == name).ToList()[number];
-            var selectedItem =((TreeViewItem) itemses.ContainerFromItem(selected));
-            
-            if(selectedItem == null) return;
-            selectedItem.IsExpanded = true;
-
-            step++; 
-            if (treeNodes.Count > step)
+            while (true)
             {
-                ExpandTree(selectedItem.ItemContainerGenerator, treeNodes, step);
+                last.UpdateLayout();
+                var name = treeNodes[step].Split('|')[0];
+                var number = int.Parse(treeNodes[step].Split('|')[1]) - 1;
+                var selected = itemses.Items.Cast<XmlElement>().Where(x => x.LocalName == name).ToList()[number];
+                var selectedItem = ((TreeViewItem) itemses.ContainerFromItem(selected));
+                if (selectedItem == null) return;
+                selectedItem.IsExpanded = true;
+
+                step++;
+                if (treeNodes.Count > step)
+                {
+                    itemses = selectedItem.ItemContainerGenerator;
+                    last = selectedItem;
+                    continue;
+                }
+
+                break;
             }
         }
 
-            private void OnWindowActivated(Window gotFocus, Window lostFocus)
+
+        /// <summary>
+        /// Search for an element of a certain type in the visual tree.
+        /// </summary>
+        /// <typeparam name="T">The type of element to find.</typeparam>
+        /// <param name="visual">The parent element.</param>
+        /// <returns></returns>
+        private T FindVisualChild<T>(Visual visual) where T : Visual
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(visual); i++)
+            {
+                Visual child = (Visual)VisualTreeHelper.GetChild(visual, i);
+                if (child != null)
+                {
+                    T correctlyTyped = child as T;
+                    if (correctlyTyped != null)
+                    {
+                        return correctlyTyped;
+                    }
+
+                    T descendent = FindVisualChild<T>(child);
+                    if (descendent != null)
+                    {
+                        return descendent;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private void OnWindowActivated(Window gotFocus, Window lostFocus)
         {
             if(gotFocus.Document?.Language == "XML")
             {
